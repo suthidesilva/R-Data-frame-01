@@ -1,0 +1,186 @@
+---
+title: "A04 - Suthi de Silva - CSC 285 - 11th Jan 2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+# Scenario
+
+You are working on a research project where you are examining test scores from around the country. Different teachers have sent in their data and they are now located in Percentages.csv (/srv/R/CSC_May21/Data). The data comes from a test that is worth 120 points. The teachers were instructed to send in the test scores as percentages. As the team data scientists, you and your partner have the job of cleaning up the data before it is used in the study. Prepare a document to share with your team at the next meeting, describing what you did to clean the data. Make sure you include reproducible code, because you might need to make changes later!
+
+# Loading data
+``` {r data, message=FALSE}
+percentages <- read_csv("/srv/R/CSC285_public/Suthi /Percentages.csv")
+```
+
+Here are the first 20 rows of uncleaned data for your reference.
+``` {r }
+head(percentages, n = 20)
+```
+
+
+
+
+# Cleaning up data
+### 1. Removing '.' and 'NA' from Marks column
+
+``` {r }
+percentages[150 : 160,]
+percentages[80 : 90,]
+```  
+
+As we could notice that '.' and 'NA' would affect negatively further calculation that would be doing with these data, we would have no option but to remove them.
+
+``` {r }
+percentages <- percentages[-c(which(percentages$Marks == '.' )), ]
+percentages <- percentages[complete.cases(percentages), ] 
+```  
+
+So it would look like below.
+``` {r }
+percentages[150 : 160,]
+percentages[80 : 90,]
+``` 
+
+### 2. Converting 'char' type data to 'numeric'
+
+Here we could notice that data types of 'Marks' column is 'char', as we had '.' and 'NA' in the data set originally. We should change it to 'numeric', to perform mathematical calculations later.
+
+``` {r }
+percentages$Marks <- as.numeric(percentages$Marks)
+```
+
+Now it should have changed to 'numeric'.
+
+``` {r }
+str(percentages)
+```
+
+### 3. Removing outliers
+
+First let's check whether we have any outliers.
+
+``` {r }
+percentages[c(which(percentages$Marks < 0 | percentages$Marks > 120 )), ]
+```
+
+It appears that there are some outliers, so we would remove them like this.
+
+``` {r }
+percentages <- percentages[-c(which(percentages$Marks < 0 | percentages$Marks > 120 )), ]
+```
+
+Now let's double check the existence of outliers
+``` {r }
+percentages[c(which(percentages$Marks < 0 | percentages$Marks > 120 )), ]
+```
+
+
+### 4. Adding a percentage column
+
+Now let's calculate and add a percentage column next to marks, for each mark student scored.
+``` {r }
+percentages$Percentage <- c(((percentages$Marks)/120)*100)
+head(percentages, n = 10)
+```
+
+### 5. Adding a unique Score ID for each score
+
+``` {r }
+percentages$ScoreID <- 1:nrow(percentages)
+percentages %>% relocate(ScoreID, .before= Marks)
+```
+
+
+
+# Summary
+
+Here is a summary of the data set we just cleaned up. 
+
+``` {r }
+summary(percentages)
+```
+
+
+# Analysis, and Plots.
+
+**We would be only using "Marks" to visualize data as the graphs made from "Percentage" created almost identical looking graphs**
+
+### Bar plot
+We would be making a ar chart to show the frequency or how many times each score has been repeated in the exam.
+
+``` {r }
+ggplot(data = percentages ) +
+  geom_bar(mapping = aes( y = Marks, fill = as.factor(Marks)))  +
+  labs(title="Marks distribution bar chart",
+       x="Mark", y = "Frequency") + theme_classic()
+
+```
+
+### Scatter plot
+We would be making a scatter plot to show the distribution of scores among the score IDs in the exam. As it would give us a visual explanation how far spread the scores are and find if there is a visible correlation or not. **There is no particular correlation as all the data are spreading all over the graph.
+
+```{r }
+ggplot(percentages, aes(x = ScoreID , y = Marks)) +
+    geom_point(aes(color = factor(Marks)))  +
+  labs(title="Marks for ScoreIDs in Scatterplot",
+       x="ScoreID", y = "Mark") + theme_classic()
+```
+
+**In a sense it feels like ScoreIDs could be the students who gets a certain score.**
+
+### Histogram
+A histogram is used to show the distribution and to summarize discrete or continuous data of marks that are measured on an interval scale.
+
+```{r }
+ggplot(data = percentages) +
+  geom_histogram(mapping = aes(x = Marks , fill = as.factor(Marks)))  +
+  labs(title="Continuous marks in histogram",
+       x="Mark", y = "Count") + theme_classic()
+```
+
+
+### Boxplot
+A box plot represents the mean, upper and lower quartiles with interquartile range, min and max of marks and percentages.
+
+```{r }
+ggplot(percentages, aes(y = Marks)) +
+  geom_boxplot(fill="violet") +
+  ggtitle('Boxplot for Marks') 
+
+ggplot(percentages, aes(y = Percentage)) +
+  geom_boxplot(fill="green") +
+  ggtitle('Boxplot for Percentage') 
+``` 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
